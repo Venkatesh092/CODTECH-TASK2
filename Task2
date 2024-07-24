@@ -1,0 +1,395 @@
+/*Main code
+package venkatesh;
+
+
+import java.time.Duration;
+import java.util.List;
+import java.util.stream.Stream;
+
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.interactions.Actions;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
+import org.testng.Assert;
+import org.testng.annotations.Test;
+
+import io.github.bonigarcia.wdm.WebDriverManager;
+import venkatesh.pageobjects.CartPage;
+import venkatesh.pageobjects.CheckoutPage;
+import venkatesh.pageobjects.ConfirmationPage;
+import venkatesh.pageobjects.LandingPage;
+import venkatesh.pageobjects.ProductCatalogue;
+
+@Test
+public class Project2 {
+
+	public void project() throws InterruptedException {
+		// TODO Auto-generated method stub
+		String productName = "ZARA COAT 3";
+		WebDriverManager.chromedriver().setup();
+		WebDriver driver = new ChromeDriver();
+		driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
+		driver.manage().window().maximize();
+		WebDriverWait wait = new WebDriverWait(driver,Duration.ofSeconds(5));
+		LandingPage landingPage = new LandingPage(driver);
+		landingPage.goTo();
+		
+		ProductCatalogue productCatalogue = landingPage.loginApplication("anshuram@gmail.com","Pww@$1234");
+		
+		List<WebElement> products = productCatalogue.getProductList();
+		productCatalogue.addProductToCart(productName);
+		CartPage cartPage = productCatalogue.goTocartPage();
+		  
+	   Boolean match  = cartPage.VerifyProductDisplay(productName);
+	   Assert.assertTrue(match);
+	   CheckoutPage checkoutPage = cartPage.goToCheckout();
+	   checkoutPage.selectCountry("india");
+	   ConfirmationPage confirmationPage= checkoutPage.submitOrder();
+	   String confirmMessage = confirmationPage.getConfirmationMessage();
+	   Assert.assertTrue(confirmMessage.equalsIgnoreCase("THANKYOU FOR THE ORDER."));
+	   driver.close();
+	   
+	}
+
+}
+
+
+//page object model
+
+package venkatesh.pageobjects;
+
+import java.util.List;
+
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.FindBy;
+import org.openqa.selenium.support.PageFactory;
+
+import venkatesh.ReusableComponents.AbstractComponent;
+
+
+public class CartPage extends AbstractComponent{
+	
+	WebDriver driver;
+	
+	@FindBy(css=".totalRow button")
+	WebElement checkoutEle;
+	
+	@FindBy(css=".cartSection h3")
+	private List <WebElement> cartProducts;
+	
+	public CartPage(WebDriver driver) {
+		super(driver);
+		this.driver=driver;
+		PageFactory.initElements(driver, this);
+	}
+	
+	public Boolean VerifyProductDisplay(String productName) {
+		Boolean match = cartProducts.stream().anyMatch(cartProduct -> cartProduct.getText().equalsIgnoreCase(productName));
+		return match;
+	}
+	
+	public CheckoutPage goToCheckout() {
+		checkoutEle.click();
+		return new CheckoutPage(driver);
+	}
+	
+
+}
+
+
+package venkatesh.pageobjects;
+
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.interactions.Actions;
+import org.openqa.selenium.support.FindBy;
+import org.openqa.selenium.support.PageFactory;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+
+import venkatesh.ReusableComponents.AbstractComponent;
+
+public class CheckoutPage extends AbstractComponent {
+
+	WebDriver driver;
+	public CheckoutPage(WebDriver driver) {
+		super(driver);
+		this.driver=driver;
+		PageFactory.initElements(driver, this);
+		
+	}
+	
+	@FindBy(css=".btnn")
+	WebElement submit;
+	
+	@FindBy(css="[placeholder='Select Country']")
+	WebElement country;
+	
+	@FindBy(css=".ta-results button:nth-of-type(2)")
+	WebElement selectCountry;
+	
+	By results = By.cssSelector(".ta-results");
+	
+	public void selectCountry(String countryName) {
+		Actions a = new Actions(driver);
+		a.sendKeys(country, countryName).build().perform();
+		waitForElementToAppear(results);
+		selectCountry.click();
+	}
+	
+	public ConfirmationPage submitOrder()
+	{
+		submit.click();
+		return new ConfirmationPage(driver);
+	}
+	
+
+	
+}
+
+
+package venkatesh.pageobjects;
+
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.FindBy;
+import org.openqa.selenium.support.PageFactory;
+
+import venkatesh.ReusableComponents.AbstractComponent;
+
+public class ConfirmationPage extends AbstractComponent {
+	
+	WebDriver driver;
+	public ConfirmationPage(WebDriver driver) {
+		super(driver);
+		this.driver=driver;
+		PageFactory.initElements(driver, this);
+		
+	}
+	
+	@FindBy(css=".hero-primary")
+	WebElement confirmationMessage;
+	
+	public String getConfirmationMessage()
+	{
+		return confirmationMessage.getText();
+	}
+
+}
+
+
+package venkatesh.pageobjects;
+
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.FindBy;
+import org.openqa.selenium.support.PageFactory;
+
+import venkatesh.ReusableComponents.AbstractComponent;
+
+public class LandingPage extends AbstractComponent{
+	
+	WebDriver driver;
+	public LandingPage(WebDriver driver) {
+		super(driver);
+		this.driver=driver;
+		PageFactory.initElements(driver, this);
+	}
+	
+	@FindBy(id="userEmail")
+	WebElement userEmail;
+	
+	@FindBy(id="userPassword")
+	WebElement userPassword;
+	
+	@FindBy(id="login")
+	WebElement submit;
+	
+	public ProductCatalogue loginApplication(String email,String password){
+		
+		userEmail.sendKeys(email);
+		userPassword.sendKeys(password);
+		submit.click();
+		ProductCatalogue productCatalogue = new ProductCatalogue(driver);
+		return productCatalogue;
+	}
+	
+	public void goTo() {
+		driver.get("https://rahulshettyacademy.com/client/");
+	}
+	
+
+}
+
+
+package venkatesh.pageobjects;
+
+import java.util.List;
+
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.FindBy;
+import org.openqa.selenium.support.PageFactory;
+
+import venkatesh.ReusableComponents.AbstractComponent;
+
+public class ProductCatalogue extends AbstractComponent{
+	
+	WebDriver driver;
+	public ProductCatalogue(WebDriver driver) {
+		super(driver);
+		this.driver=driver;
+		PageFactory.initElements(driver, this);
+	}
+	
+	@FindBy(css=".mb-3")
+	List<WebElement> products;
+	
+	@FindBy(css=".ng-animating")
+	WebElement loader;
+	
+	By productsBy = By.cssSelector(".mb-3");
+	By addToCart = By.cssSelector(".card-body button:last-of-type");
+	By toastMessage = By.cssSelector("#toast-container");
+	
+	public List<WebElement> getProductList() {
+		
+		waitForElementToAppear(productsBy);
+		return products;
+	}
+
+	public WebElement getProductByName(String productName) {
+		// TODO Auto-generated method stub
+		WebElement prod = getProductList().stream().filter(product->product.findElement(By.cssSelector("b")).getText().equals(productName)).findFirst().orElse(null);
+		return prod;
+	}
+	
+	public void addProductToCart(String productName) throws InterruptedException {
+		WebElement prod = getProductByName(productName);
+		prod.findElement(addToCart).click();
+		waitForElementToAppear(toastMessage);
+		waitForElementToDissapear(loader);
+	}
+	
+	
+
+}
+
+
+package venkatesh.ReusableComponents;
+import java.time.Duration;
+
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.FindBy;
+import org.openqa.selenium.support.PageFactory;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
+
+import venkatesh.pageobjects.CartPage;
+
+
+public class AbstractComponent {
+
+	WebDriver driver;
+		
+	public AbstractComponent(WebDriver driver) {
+	    this.driver=driver;
+		PageFactory.initElements(driver, this);
+	}
+	
+	@FindBy(css="[routerlink*='cart']")
+	WebElement cartHeader;
+
+	public void waitForElementToAppear(By findBy) {
+		
+		WebDriverWait wait = new WebDriverWait(driver,Duration.ofSeconds(5));
+		wait.until(ExpectedConditions.visibilityOfElementLocated(findBy));
+	}
+	
+	public CartPage goTocartPage() {
+		
+		cartHeader.click();
+		CartPage cartPage = new CartPage(driver);
+		return cartPage;
+	}
+	
+	public void waitForElementToDissapear(WebElement ele) throws InterruptedException {
+		Thread.sleep(1000);
+		//WebDriverWait wait = new WebDriverWait(driver,Duration.ofSeconds(2));
+		//wait.until(ExpectedConditions.invisibilityOf(ele));
+	}
+}
+
+
+//pom.xml file
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>venkatesh</groupId>
+  <artifactId>SeleniumFrameworkDesign</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+  <packaging>jar</packaging>
+
+  <name>SeleniumFrameworkDesign</name>
+  <url>http://maven.apache.org</url>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+
+  <dependencies>
+    <dependency>
+    <groupId>org.seleniumhq.selenium</groupId>
+    <artifactId>selenium-java</artifactId>
+    <version>4.22.0</version>
+</dependency>
+
+<dependency>
+    <groupId>org.testng</groupId>
+    <artifactId>testng</artifactId>
+    <version>7.10.2</version>
+    <scope>test</scope>
+</dependency>
+
+<dependency>
+    <groupId>io.github.bonigarcia</groupId>
+    <artifactId>webdrivermanager</artifactId>
+    <version>5.8.0</version>
+</dependency>
+  	<dependency>
+  		<groupId>venkatesh</groupId>
+  		<artifactId>selenium-java</artifactId>
+  		<version>0.0.1-SNAPSHOT</version>
+  	</dependency>
+  </dependencies>
+</project>
+
+
+//TestNG File
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+
+<suite name="Suite">
+  <test thread-count="5" name="Test">
+  <packages>
+    <package name = "venkatesh.pageobjects"/>
+    <package name = "venkatesh.ReusableComponents"/>
+    <package name = "venkatesh"/>
+  </packages>
+  
+  </test> <!-- Test -->
+</suite> <!-- Suite -->
+
+*/
+
+
