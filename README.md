@@ -1,4 +1,9 @@
 # CODTECH-TASK2
+Name: Venkatesh Vijaykar 
+Company: CODTECH IT SOLUTIONS 
+ID: CT4AT2969 
+Domain: Automation Testing 
+Duration: June 25 to July 25th 2024
 
 Project Objective:
 Automate the testing of an e-commerce web application using Selenium WebDriver to ensure seamless functionality from product selection to order confirmation. This project aims to validate critical user journeys and verify the application's behavior under various scenarios.
